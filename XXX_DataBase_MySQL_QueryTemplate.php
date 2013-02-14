@@ -1,0 +1,645 @@
+<?php
+
+abstract class XXX_DataBase_MySQL_QueryTemplate
+{
+	const CLASS_NAME = 'XXX_DataBase_MySQL_QueryTemplate';
+	
+	public static $validFilterTypes = array('integer', 'integerOptions', 'integerBetween', 'float', 'floatBetween', 'string', 'stringOptions', 'stringBetween', 'boolean', 'like', 'pattern', 'raw');	
+	public static $validResponseTypes = array(false, 'ID', 'record', 'records', 'affected', 'success');
+	
+	public static $queryTemplates = array();
+	
+	public static function getByName ($name = '')
+	{
+		$result = false;
+		
+		for ($i = 0, $iEnd = XXX_Array::getFirstLevelItemTotal(self::$queryTemplates); $i < $iEnd; ++$i)
+		{
+			$queryTemplate = self::$queryTemplates[$i];
+			
+			if ($queryTemplate['name'] == $name)
+			{
+				$result = $queryTemplate;
+				
+				break;
+			}
+		}
+		
+		return $result;
+	}
+	
+	public static function getIDByName ($name = '')
+	{
+		$result = false;
+		
+		for ($i = 0, $iEnd = XXX_Array::getFirstLevelItemTotal(self::$queryTemplates); $i < $iEnd; ++$i)
+		{
+			$queryTemplate = self::$queryTemplates[$i];
+			
+			if ($queryTemplate['name'] == $name)
+			{
+				$result = $i;
+				
+				break;
+			}
+		}
+		
+		return $result;
+	}
+	
+	public static function getByID ($ID = 0)
+	{
+		$result = false;
+		
+		for ($i = 0, $iEnd = XXX_Array::getFirstLevelItemTotal(self::$queryTemplates); $i < $iEnd; ++$i)
+		{
+			if ($i == $ID)
+			{
+				$result = self::$queryTemplates[$i];
+			}
+		}
+		
+		return $result;
+	}
+	
+	public static function create ($name = '', $query = '', $inputFilters = array(), $responseType = 'success', $requiredConnectionType = 'content', $dataBase = '', $recordCasting = array())
+	{
+		$result = false;
+		
+		if (!XXX_Type::isArray($inputFilters))
+		{
+			$inputFilters = array();
+		}
+		
+		if ($responseType == '')
+		{
+			$responseType = 'success';
+		}
+		
+		if ($requiredConnectionType == '')
+		{
+			$requiredConnectionType = 'content';
+		}
+		
+		if (!XXX_Type::isArray($recordCasting))
+		{
+			$recordCasting = array();
+		}
+		
+		if ($requiredConnectionType == 'readContent' || $requiredConnectionType == 'writeContent' || $requiredConnectionType == 'content' || $requiredConnectionType == 'administration')
+		{		
+			if (XXX_Array::hasValue(self::$validResponseTypes, $responseType) || $responseType === false)
+			{		
+				$questionMarks = XXX_String_Pattern::getMatches($query, '\?');			
+				$variableValueTotal = XXX_Array::getFirstLevelItemTotal($questionMarks[0]);
+				
+				$inputFilterTotal = XXX_Array::getFirstLevelItemTotal($inputFilters);
+				
+				if ($variableValueTotal == $inputFilterTotal)
+				{
+					$validInputFilters = true;
+					
+					foreach ($inputFilters as $inputFilter)
+					{
+						if (!XXX_Array::hasValue(self::$validFilterTypes, $inputFilter))
+						{
+							$validInputFilters = false;
+							break;
+						}
+					}
+					
+					if ($validInputFilters)
+					{
+						$queryParts = XXX_String::splitToArray($query, '?');
+						
+						$queryTemplateID = XXX_Array::getFirstLevelItemTotal(self::$queryTemplates);
+						
+						self::$queryTemplates[] = array
+						(
+							'ID' => $queryTemplateID,
+							'name' => $name,
+							'query' => $query,
+							'queryParts' => $queryParts,
+							'inputFilters' => $inputFilters,
+							'responseType' => $responseType,
+							'requiredConnectionType' => $requiredConnectionType,
+							'dataBase' => $dataBase,
+							'recordCasting' => $recordCasting
+						);
+												
+						$result = $queryTemplateID;						
+					}
+					else
+					{
+						$result = false;
+						trigger_error('Invalid input filter(s) specified: "' . XXX_Array::joinValuesToString($filters, '|') . '"');
+					}
+				}
+				else
+				{
+					$result = false;
+					trigger_error('Number of variable values doesn\'t match the number of input filters');
+				}
+			}
+			else
+			{
+				$result = false;
+				trigger_error('Invalid responseType: "' . $responseType . '"');
+			}
+		}
+		else
+		{
+			$result = false;
+			trigger_error('Invalid requiredConnectionType "' . $requiredConnectionType . '"');
+		}
+		
+		return $result;
+	}
+	
+	public static function processInput ($queryTemplateID, array $values = array())
+	{
+		$result = false;
+		
+		$queryTemplate = self::$queryTemplates[$queryTemplateID];
+		
+		if ($queryTemplate)
+		{
+			$inputFilterTotal = XXX_Array::getFirstLevelItemTotal($queryTemplate['inputFilters']);
+			$valueTotal = XXX_Array::getFirstLevelItemTotal($values);
+			
+			$errorDescription = '';
+			
+			if ($inputFilterTotal == $valueTotal)
+			{
+				$validValues = true;
+				$invalidValueKey = -1;
+								
+				for ($i = 0, $iEnd = $inputFilterTotal; $i < $iEnd; ++$i)
+				{
+					$inputFilter = $queryTemplate['inputFilters'][$i];
+					$value = $values[$i];
+					
+					switch ($inputFilter)
+					{
+						case 'integer':							
+							if (XXX_Type::isNumeric($value))
+							{
+								$value = XXX_Type::makeInteger($value);
+								
+								if (!XXX_Type::isInteger($value))
+								{
+									$validValues = false;
+									$invalidValueKey = $i;
+									break;
+								}
+								else
+								{
+									$value = XXX_DataBase_MySQL_Filter::filterInteger($value);
+								}
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
+								break;
+							}
+							break;
+						case 'integerOptions':
+							$options = $value;
+							
+							if (XXX_Type::isArray($options))
+							{							
+								$filteredOptions = array();
+								
+								$validOptions = true;
+								
+								foreach ($options as $option)
+								{
+									if (XXX_Type::isNumeric($option))
+									{
+										$option = XXX_Type::makeInteger($option);
+										
+										if (!XXX_Type::isInteger($option))
+										{
+											$validOptions = false;
+											break;
+										}
+										else
+										{
+											$filteredOptions[] = XXX_DataBase_MySQL_Filter::filterInteger($option);
+										}
+									}
+									else
+									{
+										$validOptions = false;
+										break;
+									}
+								}
+								
+								if ($validOptions)
+								{
+									$value = '(' . XXX_Array::joinValuesToString($filteredOptions, ',') . ')';
+								}
+								else
+								{
+									$validValues = false;
+									$invalidValueKey = $i;
+									break;
+								}
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
+								break;
+							}
+							break;
+						case 'integerBetween':
+							$limits = $value;
+							
+							if (XXX_Type::isArray($limits) && XXX_Array::getFirstLevelItemTotal($limits) == 2)
+							{
+								$filteredLimits = array();
+								
+								$validLimits = true;
+								
+								foreach ($limits as $limit)
+								{
+									if (XXX_Type::isNumeric($limit))
+									{
+										$limit = XXX_Type::makeInteger($limit);
+										
+										if (!XXX_Type::isInteger($limit))
+										{
+											$validLimits = false;
+											break;
+										}
+										else
+										{
+											$filteredLimits[] = XXX_DataBase_MySQL_Filter::filterInteger($limit);
+										}
+									}
+									else
+									{
+										$validLimits = false;
+										break;
+									}
+								}
+								
+								if ($validLimits)
+								{
+									$value = $filteredLimits[0] . ' AND ' . $filteredLimits[1];
+								}
+								else
+								{
+									$validValues = false;
+									$invalidValueKey = $i;
+									break;
+								}
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
+								break;
+							}
+							break;
+						case 'float':
+							if (XXX_Type::isNumeric($value))
+							{
+								$value = XXX_Type::makeFloat($value);
+								
+								if (!XXX_Type::isFloat($value))
+								{
+									$validValues = false;
+									$invalidValueKey = $i;
+									break;
+								}
+								else
+								{
+									$value = XXX_DataBase_MySQL_Filter::filterFloat($value);
+								}
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
+								break;
+							}
+							break;
+						case 'floatBetween':
+							$limits = $value;
+							
+							if (XXX_Type::isArray($limits) && XXX_Array::getFirstLevelItemTotal($limits) == 2)
+							{
+								$filteredLimits = array();
+								
+								$validLimits = true;
+								
+								foreach ($limits as $limit)
+								{
+									if (XXX_Type::isNumeric($limit))
+									{
+										$limit = XXX_Type::makeFloat($limit);
+										
+										if (!XXX_Type::isFloat($limit))
+										{
+											$validLimits = false;
+											break;
+										}
+										else
+										{
+											$filteredLimits[] = XXX_DataBase_MySQL_Filter::filterFloat($limit);
+										}
+									}
+									else
+									{
+										$validLimits = false;
+										break;
+									}
+								}
+								
+								if ($validLimits)
+								{
+									$value = $filteredLimits[0] . ' AND ' . $filteredLimits[1];
+								}
+								else
+								{
+									$validValues = false;
+									$invalidValueKey = $i;
+									break;
+								}
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
+								break;
+							}
+							break;
+						case 'string':
+							if (XXX_Type::isString($value) || XXX_Type::isNumber($value) || XXX_Type::isBoolean($value) || $value == '')
+							{
+								$value = XXX_Type::makeString($value);
+								
+								if (!XXX_Type::isString($value))
+								{
+									$validValues = false;									
+									$invalidValueKey = $i;
+									break;
+								}
+								else
+								{
+									$value = '"' . XXX_DataBase_MySQL_Filter::filterString($value) . '"';
+								}
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
+								break;
+							}
+							break;
+						case 'stringOptions':
+							$options = $value;
+							
+							if (XXX_Type::isArray($options))
+							{							
+								$filteredOptions = array();
+								
+								$validOptions = true;
+								
+								foreach ($options as $option)
+								{
+									if (XXX_Type::isString($option) || XXX_Type::isNumber($option) || XXX_Type::isBoolean($option) || $option == '')
+									{
+										$option = XXX_Type::makeString($option);
+										
+										if (!XXX_Type::isString($option))
+										{
+											$validOptions = false;
+											break;
+										}
+										else
+										{
+											$filteredOptions[] = '"' . XXX_DataBase_MySQL_Filter::filterString($option) . '"';
+										}
+									}
+									else
+									{
+										$validOptions = false;
+										break;
+									}
+								}
+								
+								if ($validOptions)
+								{
+									$value = '(' . XXX_Array::joinValuesToString($filteredOptions, ',') . ')';
+								}
+								else
+								{
+									$validValues = false;
+									$invalidValueKey = $i;
+									break;
+								}
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
+								break;
+							}
+							break;
+						case 'stringBetween':
+							$limits = $value;
+							
+							if (XXX_Type::isArray($limits) && XXX_Array::getFirstLevelItemTotal($limits) == 2)
+							{
+								$filteredLimits = array();
+								
+								$validLimits = true;
+								
+								foreach ($limits as $limit)
+								{
+									if (XXX_Type::isString($limit) || XXX_Type::isNumber($limit) || XXX_Type::isBoolean($limit) || $limit == '')
+									{
+										$limit = XXX_Type::makeString($limit);
+										
+										if (!XXX_Type::isString($limit))
+										{
+											$validLimits = false;
+											break;
+										}
+										else
+										{
+											$filteredLimits[] = XXX_DataBase_MySQL_Filter::filterString($limit);
+										}
+									}
+									else
+									{
+										$validLimits = false;
+										break;
+									}
+								}
+								
+								if ($validLimits)
+								{
+									$value = $filteredLimits[0] . ' AND ' . $filteredLimits[1];
+								}
+								else
+								{
+									$validValues = false;
+									$invalidValueKey = $i;
+									break;
+								}
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
+								break;
+							}
+							break;
+						case 'boolean':
+							if (XXX_Type::isBoolean($value) || (XXX_Type::isNumber($value) && $value === 0 || $value === 1) || (XXX_Type::isString($value) && $value === '0' || $value === '1'))
+							{
+								$value = $value ? 1 : 0;
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
+								break;
+							}
+							break;
+						case 'like':
+							if (XXX_Type::isString($value) || XXX_Type::isNumber($value) || XXX_Type::isBoolean($value))
+							{
+								$value = XXX_DataBase_MySQL_Filter::filterLike($value);
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
+								break;
+							}
+							break;
+						case 'pattern':
+							if (XXX_Type::isString($value) || XXX_Type::isNumber($value) || XXX_Type::isBoolean($value))
+							{
+								$value = XXX_DataBase_MySQL_Filter::filterPattern($value);
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
+								break;
+							}
+							break;
+						case 'raw':
+							$value = $value;
+							break;
+					}
+										
+					$values[$i] = $value;
+				}
+									
+				if ($validValues)
+				{				
+					$parsedQueryString = '';
+					
+					for ($i = 0, $iEnd = XXX_Array::getFirstLevelItemTotal($queryTemplate['queryParts']); $i < $iEnd; ++$i)
+					{
+						if (XXX_Type::isValue($queryTemplate['queryParts'][$i]))
+						{
+							$parsedQueryString .= $queryTemplate['queryParts'][$i];
+						}
+						
+						if ($i < $iEnd - 1)
+						{
+							$parsedQueryString .= $values[$i];
+						}
+					}
+					
+					$result = array
+					(
+						'queryString' => $parsedQueryString,
+						'responseType' => $queryTemplate['responseType'],
+						'requiredConnectionType' => $queryTemplate['requiredConnectionType'],
+						'dataBase' => $queryTemplate['dataBase'],
+						'recordCasting' => $queryTemplate['recordCasting']
+					);
+				}
+				else
+				{
+					$result = false;
+					trigger_error('Invalid value(s), type mismatch (Potential SQL injection). queryTemplateID "' . $queryTemplateID . '" - query: "' . $queryTemplate['query'] . '" at value ' . $invalidValueKey);
+				}
+			}
+			else
+			{
+				$result = false;
+				trigger_error('Number of values (' . XXX_Array::getFirstLevelItemTotal($values) . ') doesn\'t match the number of input filters  (' . XXX_Array::getFirstLevelItemTotal($queryTemplate['inputFilters']) . '). queryTemplateID "' . $queryTemplateID . '" - query: "' . $queryTemplate['query'] . '"');
+			}
+		}
+		else
+		{
+			$result = false;
+			trigger_error('Invalid queryTemplateID "' . $queryTemplateID . '"');
+		}
+		
+		return $result;
+	}
+	
+	// Needed because mysql_fetch etc. return only strings, not the original type...
+	public static function processResult ($result, $recordCasting)
+	{
+		if ($result !== false && $result['total'] > 0 && XXX_Type::isFilledArray($recordCasting))
+		{
+			if (XXX_Type::isArray($result['record']))
+			{
+				foreach ($recordCasting as $key => $type)
+				{
+					switch ($type)
+					{
+						case 'integer':
+							$result['record'][$key] = XXX_Type::makeInteger($result['record'][$key]);
+							break;
+						case 'float':
+							$result['record'][$key] = XXX_Type::makeFloat($result['record'][$key]);
+							break;
+						case 'boolean':
+							$result['record'][$key] = XXX_Type::makeBoolean($result['record'][$key]);
+							break;
+					}
+				}
+			}
+			else if (XXX_Type::isArray($result['records']))
+			{
+				for ($i = 0, $iEnd = XXX_Array::getFirstLevelItemTotal($result['records']); $i < $iEnd; ++$i)
+				{
+					foreach ($recordCasting as $key => $type)
+					{
+						switch ($type)
+						{
+							case 'integer':
+								$result['records'][$i][$key] = XXX_Type::makeInteger($result['records'][$i][$key]);
+								break;
+							case 'float':
+								$result['records'][$i][$key] = XXX_Type::makeFloat($result['records'][$i][$key]);
+								break;
+							case 'boolean':
+								$result['records'][$i][$key] = XXX_Type::makeBoolean($result['records'][$i][$key]);
+								break;
+						}
+					}
+				}
+			}
+			
+		}
+		
+		return $result;
+	}
+}
+
+?>
