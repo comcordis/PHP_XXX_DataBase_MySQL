@@ -74,7 +74,7 @@ class XXX_DataBase_MySQL_AbstractionLayer
 		return $result;
 	}
 	
-	public function query ($query, $responseType = false, $requiredConnectionType = 'administration', $moveResultFromMySQLMemoryToPHPMemory = true, $simplifyResult = false)
+	public function query ($query, $responseType = false, $requiredConnectionType = 'administration', $simplifyResult = false, $moveResultFromMySQLMemoryToPHPMemory = true)
 	{
 		$result = false;
 		
@@ -99,6 +99,9 @@ class XXX_DataBase_MySQL_AbstractionLayer
 							break;
 						case 'affected':
 							$result = $result['affected'];
+							break;
+						case 'success':
+							$result = $result['success'];
 							break;
 					}
 				}
@@ -128,11 +131,16 @@ class XXX_DataBase_MySQL_AbstractionLayer
 		return ($this->connection !== false) ? $this->connection->rollbackTransaction() : false;
 	}
 	
-	public function executeQueryTemplate ($name, $values = array(), $moveResultFromMySQLMemoryToPHPMemory = true, $simplifyResult = false)
+	public function executeQueryTemplate ($name, $values = array(), $simplifyResult = false, $moveResultFromMySQLMemoryToPHPMemory = true)
 	{
 		global $XXX_DataBase_MySQL_QueryTemplates;
 		
 		$result = false;
+		
+		if ($values === false)
+		{
+			$values = array();
+		}
 		
 		if ($this->connection !== false)
 		{
@@ -156,7 +164,7 @@ class XXX_DataBase_MySQL_AbstractionLayer
 				{
 					if (XXX_Type::isEmpty($processedQueryTemplateInput['dataBase']) || $this->selectDataBase($processedQueryTemplateInput['dataBase']))
 					{						
-						$result = $this->query($processedQueryTemplateInput['queryString'], $processedQueryTemplateInput['responseType'], $processedQueryTemplateInput['requiredConnectionType'], $moveResultFromMySQLMemoryToPHPMemory, false);
+						$result = $this->query($processedQueryTemplateInput['queryString'], $processedQueryTemplateInput['responseType'], $processedQueryTemplateInput['requiredConnectionType'], false, $moveResultFromMySQLMemoryToPHPMemory);
 						
 						if ($result)
 						{
@@ -201,7 +209,7 @@ class XXX_DataBase_MySQL_AbstractionLayer
 							
 							if ($simplifyResult)
 							{
-								switch ($responseType)
+								switch ($processedQueryTemplateInput['responseType'])
 								{
 									case 'ID':
 										$result = $result['ID'];
@@ -214,6 +222,9 @@ class XXX_DataBase_MySQL_AbstractionLayer
 										break;
 									case 'affected':
 										$result = $result['affected'];
+										break;
+									case 'success':
+										$result = $result['success'];
 										break;
 								}
 							}

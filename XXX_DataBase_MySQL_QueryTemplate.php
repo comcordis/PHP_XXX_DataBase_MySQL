@@ -4,7 +4,7 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 {
 	const CLASS_NAME = 'XXX_DataBase_MySQL_QueryTemplate';
 	
-	public static $validFilterTypes = array('integer', 'integerOptions', 'integerBetween', 'float', 'floatBetween', 'string', 'stringOptions', 'stringBetween', 'boolean', 'like', 'pattern', 'raw');	
+	public static $validFilterTypes = array('integer', 'integerOptions', 'integerBetween', 'float', 'floatBetween', 'string', 'stringOptions', 'stringBetween', 'boolean', 'like', 'pattern', 'order', 'raw');	
 	public static $validResponseTypes = array(false, 'ID', 'record', 'records', 'affected', 'success');
 	
 	public static $queryTemplates = array();
@@ -238,6 +238,9 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 								
 								if ($validOptions)
 								{
+									// Sort ascending to optimize searching
+									sort($filteredOptions);
+									
 									$value = '(' . XXX_Array::joinValuesToString($filteredOptions, ',') . ')';
 								}
 								else
@@ -398,6 +401,26 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 								$validValues = false;
 								$invalidValueKey = $i;
 								break;
+							}
+							break;
+						case 'order':
+							$value = XXX_String::convertToLowerCase($value);
+							
+							if (XXX_Array::hasValue(array('asc', 'ascending', 'desc', 'descending'), $value))
+							{
+								$order = 'ASC';
+								
+								if ($value == 'desc' || $value == 'descending')
+								{
+									$order = 'DESC';
+								}
+								
+								$value = $order;
+							}
+							else
+							{
+								$validValues = false;
+								$invalidValueKey = $i;
 							}
 							break;
 						case 'stringOptions':
