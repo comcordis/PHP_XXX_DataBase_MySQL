@@ -4,8 +4,31 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 {
 	const CLASS_NAME = 'XXX_DataBase_MySQL_QueryTemplate';
 	
-	public static $validFilterTypes = array('integer', 'integerOptions', 'integerBetween', 'float', 'floatBetween', 'string', 'stringOptions', 'stringBetween', 'boolean', 'like', 'pattern', 'order', 'raw');	
-	public static $validResponseTypes = array(false, 'ID', 'record', 'records', 'affected', 'success');
+	public static $validFilterTypes = array
+	(
+		'integer',
+		'integerOptions',
+		'integerBetween',
+		'float',
+		'floatBetween',
+		'string',
+		'stringOptions',
+		'stringBetween',
+		'boolean',
+		'like',
+		'pattern',
+		'order',
+		'raw'
+	);	
+	public static $validResponseTypes = array
+	(
+		false,
+		'ID',
+		'record',
+		'records',
+		'affected',
+		'success'
+	);
 	
 	public static $queryTemplates = array();
 	
@@ -30,6 +53,8 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 	
 	public static function getIDByName ($name = '')
 	{
+		global $XXX_DataBase_MySQL_QueryTemplates;
+		
 		$result = false;
 		
 		for ($i = 0, $iEnd = XXX_Array::getFirstLevelItemTotal(self::$queryTemplates); $i < $iEnd; ++$i)
@@ -41,6 +66,16 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 				$result = $i;
 				
 				break;
+			}
+		}
+				
+		if ($result === false)
+		{
+			$queryTemplate = XXX_Array::traverseKeyPath($XXX_DataBase_MySQL_QueryTemplates, $name);
+			
+			if ($queryTemplate)
+			{
+				$result = self::create($name, $queryTemplate['query'], $queryTemplate['inputFilters'], $queryTemplate['responseType'], $queryTemplate['requiredConnectionType'], $queryTemplate['dataBase'], $queryTemplate['recordCasting']);
 			}
 		}
 		
@@ -62,7 +97,12 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 		return $result;
 	}
 	
-	public static function create ($name = '', $query = '', $inputFilters = array(), $responseType = 'success', $requiredConnectionType = 'content', $dataBase = '', $recordCasting = array())
+	public static function createByArray ($name = '', $array = array())
+	{
+		return self::create($name, $array['query'], $array['inputFilters'], $array['responseType'], $array['requiredConnectionType'], $array['dataBase'], $array['recordCasting']);
+	}
+	
+	public static function create ($name = '', $query = '', $inputFilters = array(), $responseType = 'success', $requiredConnectionType = 'readContent', $dataBase = '', $recordCasting = array())
 	{
 		$result = false;
 		
@@ -78,7 +118,7 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 		
 		if ($requiredConnectionType == '')
 		{
-			$requiredConnectionType = 'content';
+			$requiredConnectionType = 'readContent';
 		}
 		
 		if (!XXX_Type::isArray($recordCasting))
@@ -86,11 +126,11 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 			$recordCasting = array();
 		}
 		
-		if ($requiredConnectionType == 'readContent' || $requiredConnectionType == 'writeContent' || $requiredConnectionType == 'content' || $requiredConnectionType == 'administration')
+		if (XXX_Array::hasValue(XXX_DataBase_MySQL_Connections::$validConnectionTypes, $requiredConnectionType))
 		{		
 			if (XXX_Array::hasValue(self::$validResponseTypes, $responseType) || $responseType === false)
 			{		
-				$questionMarks = XXX_String_Pattern::getMatches($query, '\?');			
+				$questionMarks = XXX_String_Pattern::getMatches($query, '\?');
 				$variableValueTotal = XXX_Array::getFirstLevelItemTotal($questionMarks[0]);
 				
 				$inputFilterTotal = XXX_Array::getFirstLevelItemTotal($inputFilters);

@@ -2,11 +2,19 @@
 
 abstract class XXX_DataBase_MySQL_Connections
 {
-	public static $defaultPrefix = 'XXX_';
+	public static $defaultPrefix = 'XXX';
 	
 	public static $dataBases = array();	
 	public static $connections = array();
 	public static $abstractionLayers = array();
+	
+	public static $validConnectionTypes = array
+	(
+		'readContent',
+		'writeContent',
+		'content',
+		'administration'
+	);
 	
 	public static function setDefaultPrefix ($defaultPrefix = '')
 	{
@@ -15,6 +23,8 @@ abstract class XXX_DataBase_MySQL_Connections
 	
 	public static function add ($prefix = '', $name = '', $settings = array(), $deployEnvironment = '', $recycleName = false)
 	{
+		global $XXX_DataBase_MySQL_QueryTemplates;
+	
 		if ($prefix == '')
 		{
 			$prefix = self::$defaultPrefix;
@@ -45,6 +55,11 @@ abstract class XXX_DataBase_MySQL_Connections
 			$settings['connectionType'] = 'readContent';
 		}
 		
+		if (!XXX_Array::hasValue(self::$validConnectionTypes, $settings['connectionType']))
+		{
+			$settings['connectionType'] = 'readContent';
+		}
+		
 		if ($settings['port'] == '')
 		{
 			$settings['port'] = 3306;
@@ -55,13 +70,22 @@ abstract class XXX_DataBase_MySQL_Connections
 			$settings['address'] = 'localhost';
 		}
 		
-		$dataBase = $prefix;
+		$dataBase = $prefix . '_';
 		$dataBase .= $deployEnvironment . '_';
 		$dataBase .= $name;
 		
 		if ($settings['defaultDataBase'] == '')
 		{
 			$settings['defaultDataBase'] = $dataBase;
+		}
+		
+		if (!XXX_Type::isArray($XXX_DataBase_MySQL_QueryTemplates[$prefix]))
+		{
+			$XXX_DataBase_MySQL_QueryTemplates[$prefix] = array();
+		}
+		if (!XXX_Type::isArray($XXX_DataBase_MySQL_QueryTemplates[$prefix][$name]))
+		{
+			$XXX_DataBase_MySQL_QueryTemplates[$prefix][$name] = array();
 		}
 		
 		self::$dataBases[$name] = $dataBase;

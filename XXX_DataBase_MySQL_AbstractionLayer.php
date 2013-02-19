@@ -133,8 +133,6 @@ class XXX_DataBase_MySQL_AbstractionLayer
 	
 	public function executeQueryTemplate ($name, $values = array(), $simplifyResult = false, $moveResultFromMySQLMemoryToPHPMemory = true)
 	{
-		global $XXX_DataBase_MySQL_QueryTemplates;
-		
 		$result = false;
 		
 		if ($values === false)
@@ -145,17 +143,7 @@ class XXX_DataBase_MySQL_AbstractionLayer
 		if ($this->connection !== false)
 		{
 			$queryTemplateID = XXX_DataBase_MySQL_QueryTemplate::getIDByName($name);
-			
-			if ($queryTemplateID === false)
-			{
-				$queryTemplate = XXX_Array::traverseKeyPath($XXX_DataBase_MySQL_QueryTemplates, $name);
-				
-				if ($queryTemplate)
-				{
-					$queryTemplateID = XXX_DataBase_MySQL_QueryTemplate::create($name, $queryTemplate['query'], $queryTemplate['inputFilters'], $queryTemplate['responseType'], $queryTemplate['requiredConnectionType'], $queryTemplate['dataBase'], $queryTemplate['recordCasting']);					
-				}
-			}
-			
+						
 			if ($queryTemplateID !== false)
 			{
 				$processedQueryTemplateInput = XXX_DataBase_MySQL_QueryTemplate::processInput($queryTemplateID, $values);
