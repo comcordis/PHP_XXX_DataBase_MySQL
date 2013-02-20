@@ -51,6 +51,25 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 		return $result;
 	}
 	
+	public static function checkExistenceByName ($name = '')
+	{
+		$result = false;
+		
+		for ($i = 0, $iEnd = XXX_Array::getFirstLevelItemTotal(self::$queryTemplates); $i < $iEnd; ++$i)
+		{
+			$queryTemplate = self::$queryTemplates[$i];
+			
+			if ($queryTemplate['name'] == $name)
+			{
+				$result = true;
+				
+				break;
+			}
+		}
+		
+		return $result;
+	}
+	
 	public static function getIDByName ($name = '')
 	{
 		global $XXX_DataBase_MySQL_QueryTemplates;
@@ -68,7 +87,7 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 				break;
 			}
 		}
-				
+		
 		if ($result === false)
 		{
 			$queryTemplate = XXX_Array::traverseKeyPath($XXX_DataBase_MySQL_QueryTemplates, $name);
@@ -106,91 +125,94 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 	{
 		$result = false;
 		
-		if (!XXX_Type::isArray($inputFilters))
-		{
-			$inputFilters = array();
-		}
-		
-		if ($responseType == '')
-		{
-			$responseType = 'success';
-		}
-		
-		if ($requiredConnectionType == '')
-		{
-			$requiredConnectionType = 'readContent';
-		}
-		
-		if (!XXX_Type::isArray($recordCasting))
-		{
-			$recordCasting = array();
-		}
-		
-		if (XXX_Array::hasValue(XXX_DataBase_MySQL_Connections::$validConnectionTypes, $requiredConnectionType))
+		if (!self::checkExistenceByName($name))
 		{		
-			if (XXX_Array::hasValue(self::$validResponseTypes, $responseType) || $responseType === false)
+			if (!XXX_Type::isArray($inputFilters))
+			{
+				$inputFilters = array();
+			}
+			
+			if ($responseType == '')
+			{
+				$responseType = 'success';
+			}
+			
+			if ($requiredConnectionType == '')
+			{
+				$requiredConnectionType = 'readContent';
+			}
+			
+			if (!XXX_Type::isArray($recordCasting))
+			{
+				$recordCasting = array();
+			}
+			
+			if (XXX_Array::hasValue(XXX_DataBase_MySQL_Connections::$validConnectionTypes, $requiredConnectionType))
 			{		
-				$questionMarks = XXX_String_Pattern::getMatches($query, '\?');
-				$variableValueTotal = XXX_Array::getFirstLevelItemTotal($questionMarks[0]);
-				
-				$inputFilterTotal = XXX_Array::getFirstLevelItemTotal($inputFilters);
-				
-				if ($variableValueTotal == $inputFilterTotal)
-				{
-					$validInputFilters = true;
+				if (XXX_Array::hasValue(self::$validResponseTypes, $responseType) || $responseType === false)
+				{		
+					$questionMarks = XXX_String_Pattern::getMatches($query, '\?');
+					$variableValueTotal = XXX_Array::getFirstLevelItemTotal($questionMarks[0]);
 					
-					foreach ($inputFilters as $inputFilter)
+					$inputFilterTotal = XXX_Array::getFirstLevelItemTotal($inputFilters);
+					
+					if ($variableValueTotal == $inputFilterTotal)
 					{
-						if (!XXX_Array::hasValue(self::$validFilterTypes, $inputFilter))
+						$validInputFilters = true;
+						
+						foreach ($inputFilters as $inputFilter)
 						{
-							$validInputFilters = false;
-							break;
+							if (!XXX_Array::hasValue(self::$validFilterTypes, $inputFilter))
+							{
+								$validInputFilters = false;
+								break;
+							}
 						}
-					}
-					
-					if ($validInputFilters)
-					{
-						$queryParts = XXX_String::splitToArray($query, '?');
 						
-						$queryTemplateID = XXX_Array::getFirstLevelItemTotal(self::$queryTemplates);
-						
-						self::$queryTemplates[] = array
-						(
-							'ID' => $queryTemplateID,
-							'name' => $name,
-							'query' => $query,
-							'queryParts' => $queryParts,
-							'inputFilters' => $inputFilters,
-							'responseType' => $responseType,
-							'requiredConnectionType' => $requiredConnectionType,
-							'dataBase' => $dataBase,
-							'recordCasting' => $recordCasting
-						);
-												
-						$result = $queryTemplateID;						
+						if ($validInputFilters)
+						{
+							$queryParts = XXX_String::splitToArray($query, '?');
+							
+							$queryTemplateID = XXX_Array::getFirstLevelItemTotal(self::$queryTemplates);
+							
+							self::$queryTemplates[] = array
+							(
+								'ID' => $queryTemplateID,
+								'name' => $name,
+								'query' => $query,
+								'queryParts' => $queryParts,
+								'inputFilters' => $inputFilters,
+								'responseType' => $responseType,
+								'requiredConnectionType' => $requiredConnectionType,
+								'dataBase' => $dataBase,
+								'recordCasting' => $recordCasting
+							);
+													
+							$result = $queryTemplateID;						
+						}
+						else
+						{
+							$result = false;
+							trigger_error('Invalid input filter(s) specified: "' . XXX_Array::joinValuesToString($filters, '|') . '"');
+						}
 					}
 					else
 					{
 						$result = false;
-						trigger_error('Invalid input filter(s) specified: "' . XXX_Array::joinValuesToString($filters, '|') . '"');
+						trigger_error('Number of variable values doesn\'t match the number of input filters');
 					}
 				}
 				else
 				{
 					$result = false;
-					trigger_error('Number of variable values doesn\'t match the number of input filters');
+					trigger_error('Invalid responseType: "' . $responseType . '"');
 				}
 			}
 			else
 			{
 				$result = false;
-				trigger_error('Invalid responseType: "' . $responseType . '"');
+				trigger_error('Invalid requiredConnectionType "' . $requiredConnectionType . '"');
 			}
-		}
-		else
-		{
-			$result = false;
-			trigger_error('Invalid requiredConnectionType "' . $requiredConnectionType . '"');
 		}
 		
 		return $result;
