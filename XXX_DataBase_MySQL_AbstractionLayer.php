@@ -164,33 +164,33 @@ class XXX_DataBase_MySQL_AbstractionLayer
 							if (XXX_PHP::$debug)
 							{
 								$debugNotification = '';
-								$debugNotification .= 'template: ' . $name . '<br>';
+								$debugNotification .= 'template: ' . $name . XXX_OperatingSystem::$lineSeparator;
 								if ($processedQueryTemplateInput['dataBase'])
 								{
-									$debugNotification .= 'dataBase: "' . $processedQueryTemplateInput['dataBase'] . '"<br>';
+									$debugNotification .= 'dataBase: ' . $processedQueryTemplateInput['dataBase'] . XXX_OperatingSystem::$lineSeparator;
 								}
-								$debugNotification .= 'query:<br>' . $processedQueryTemplateInput['queryString'] . '<br>';
+								$debugNotification .= 'query:' . XXX_OperatingSystem::$lineSeparator . $processedQueryTemplateInput['queryString'] . XXX_OperatingSystem::$lineSeparator;
 								
 								switch ($processedQueryTemplateInput['responseType'])
 								{
 									case 'ID':
-										$debugNotification .= 'Returned ID: <b>' . $result['ID'] . '</b><br>';
+										$debugNotification .= 'Returned ID: ' . $result['ID'] . XXX_OperatingSystem::$lineSeparator;
 										break;
 									case 'record':
-										$debugNotification .= 'Returned <b>' . $result['total'] . '</b> record(s):<br>';
+										$debugNotification .= 'Returned ' . $result['total'] . ' record(s):' . XXX_OperatingSystem::$lineSeparator;
 										
-										$debugNotification .= '<pre>' . print_r($result['record'], true) . '</pre>';
+										$debugNotification .= print_r($result['record'], true) . XXX_OperatingSystem::$lineSeparator;
 										break;
 									case 'records':
-										$debugNotification .= 'Returned <b>' . $result['total'] . '</b> record(s):<br>';
+										$debugNotification .= 'Returned ' . $result['total'] . ' record(s):' . XXX_OperatingSystem::$lineSeparator;
 										
-										$debugNotification .= '<pre>' . print_r($result['records'], true) . '</pre>';
+										$debugNotification .= print_r($result['records'], true) . XXX_OperatingSystem::$lineSeparator;
 										break;
 									case 'affected':
-										$debugNotification .= 'Affected <b>' . $result['affected'] . '</b> record(s)<br>';
+										$debugNotification .= 'Affected ' . $result['affected'] . ' record(s)' . XXX_OperatingSystem::$lineSeparator;
 										break;
 								}
-								$debugNotification .= 'In <b>' . $result['queryMillisecondTime'] . 'ms</b>';
+								$debugNotification .= 'In ' . $result['queryMillisecondTime'] . 'ms';
 								
 								trigger_error($debugNotification);
 							}
