@@ -92,10 +92,24 @@ class XXX_DataBase_MySQL_AbstractionLayer
 							$result = $result['ID'];
 							break;
 						case 'record':
-							$result = $result['record'];
+							if ($result['total'] == 1)
+							{
+								$result = $result['record'];
+							}
+							else
+							{
+								$result = false;
+							}
 							break;
 						case 'records':
-							$result = $result['records'];
+							if ($result['total'] > 0)
+							{
+								$result = $result['records'];
+							}
+							else
+							{
+								$result = false;
+							}
 							break;
 						case 'affected':
 							$result = $result['affected'];
@@ -156,9 +170,9 @@ class XXX_DataBase_MySQL_AbstractionLayer
 						
 						if ($result)
 						{
-							if (XXX_Type::isFilledArray($processedQueryTemplateInput['recordCasting']))
+							if (XXX_Type::isFilledArray($processedQueryTemplateInput['responseColumnTypeCasting']))
 							{
-								$result = XXX_DataBase_MySQL_QueryTemplate::processResult($result, $processedQueryTemplateInput['recordCasting']);
+								$result = XXX_DataBase_MySQL_QueryTemplate::processResult($result, $processedQueryTemplateInput['responseColumnTypeCasting']);
 							}
 							
 							if (XXX_PHP::$debug)
@@ -203,10 +217,24 @@ class XXX_DataBase_MySQL_AbstractionLayer
 										$result = $result['ID'];
 										break;
 									case 'record':
-										$result = $result['record'];
+										if ($result['total'] == 1)
+										{
+											$result = $result['record'];
+										}
+										else
+										{
+											$result = false;
+										}
 										break;
 									case 'records':
-										$result = $result['records'];
+										if ($result['total'] > 0)
+										{
+											$result = $result['records'];
+										}
+										else
+										{
+											$result = false;
+										}
 										break;
 									case 'affected':
 										$result = $result['affected'];

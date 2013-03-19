@@ -94,7 +94,7 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 			
 			if ($queryTemplate)
 			{
-				$result = self::create($name, $queryTemplate['query'], $queryTemplate['inputFilters'], $queryTemplate['responseType'], $queryTemplate['requiredConnectionType'], $queryTemplate['dataBase'], $queryTemplate['recordCasting']);
+				$result = self::create($name, $queryTemplate['query'], $queryTemplate['inputFilters'], $queryTemplate['responseType'], $queryTemplate['requiredConnectionType'], $queryTemplate['dataBase'], $queryTemplate['responseColumnTypeCasting']);
 			}
 		}
 		
@@ -118,10 +118,10 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 	
 	public static function createByArray ($name = '', $array = array())
 	{
-		return self::create($name, $array['query'], $array['inputFilters'], $array['responseType'], $array['requiredConnectionType'], $array['dataBase'], $array['recordCasting']);
+		return self::create($name, $array['query'], $array['inputFilters'], $array['responseType'], $array['requiredConnectionType'], $array['dataBase'], $array['responseColumnTypeCasting']);
 	}
 	
-	public static function create ($name = '', $query = '', $inputFilters = array(), $responseType = 'success', $requiredConnectionType = 'readContent', $dataBase = '', $recordCasting = array())
+	public static function create ($name = '', $query = '', $inputFilters = array(), $responseType = 'success', $requiredConnectionType = 'readContent', $dataBase = '', $responseColumnTypeCasting = array())
 	{
 		$result = false;
 		
@@ -142,9 +142,9 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 				$requiredConnectionType = 'readContent';
 			}
 			
-			if (!XXX_Type::isArray($recordCasting))
+			if (!XXX_Type::isArray($responseColumnTypeCasting))
 			{
-				$recordCasting = array();
+				$responseColumnTypeCasting = array();
 			}
 			
 			if (XXX_Array::hasValue(XXX_DataBase_MySQL_Connections::$validConnectionTypes, $requiredConnectionType))
@@ -185,7 +185,7 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 								'responseType' => $responseType,
 								'requiredConnectionType' => $requiredConnectionType,
 								'dataBase' => $dataBase,
-								'recordCasting' => $recordCasting
+								'responseColumnTypeCasting' => $responseColumnTypeCasting
 							);
 													
 							$result = $queryTemplateID;						
@@ -193,25 +193,25 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 						else
 						{
 							$result = false;
-							trigger_error('Invalid input filter(s) specified: "' . XXX_Array::joinValuesToString($filters, '|') . '"');
+							trigger_error('Invalid input filter(s) specified: "' . XXX_Array::joinValuesToString($filters, '|') . '"', E_USER_ERROR);
 						}
 					}
 					else
 					{
 						$result = false;
-						trigger_error('Number of variable values doesn\'t match the number of input filters');
+						trigger_error('Number of variable values doesn\'t match the number of input filters', E_USER_ERROR);
 					}
 				}
 				else
 				{
 					$result = false;
-					trigger_error('Invalid responseType: "' . $responseType . '"');
+					trigger_error('Invalid responseType: "' . $responseType . '"', E_USER_ERROR);
 				}
 			}
 			else
 			{
 				$result = false;
-				trigger_error('Invalid requiredConnectionType "' . $requiredConnectionType . '"');
+				trigger_error('Invalid requiredConnectionType "' . $requiredConnectionType . '"', E_USER_ERROR);
 			}
 		}
 		
@@ -270,7 +270,12 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 							$options = $value;
 							
 							if (XXX_Type::isArray($options))
-							{							
+							{
+								if (XXX_Type::isEmptyArray($options))
+								{
+									$options = array(0);
+								}
+									
 								$filteredOptions = array();
 								
 								$validOptions = true;
@@ -489,7 +494,12 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 							$options = $value;
 							
 							if (XXX_Type::isArray($options))
-							{							
+							{	
+								if (XXX_Type::isEmptyArray($options))
+								{
+									$options = array('');
+								}
+														
 								$filteredOptions = array();
 								
 								$validOptions = true;
@@ -586,7 +596,7 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 							}
 							break;
 						case 'boolean':
-							if (XXX_Type::isBoolean($value) || (XXX_Type::isNumber($value) && $value === 0 || $value === 1) || (XXX_Type::isString($value) && $value === '0' || $value === '1'))
+							if (($value === false || $value === true) || XXX_Type::isBoolean($value) || (XXX_Type::isNumber($value) && ($value === 0 || $value === 1)) || (XXX_Type::isString($value) && ($value === '0' || $value === '1')))
 							{
 								$value = $value ? 1 : 0;
 							}
@@ -652,38 +662,38 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 						'responseType' => $queryTemplate['responseType'],
 						'requiredConnectionType' => $queryTemplate['requiredConnectionType'],
 						'dataBase' => $queryTemplate['dataBase'],
-						'recordCasting' => $queryTemplate['recordCasting']
+						'responseColumnTypeCasting' => $queryTemplate['responseColumnTypeCasting']
 					);
 				}
 				else
 				{
 					$result = false;
-					trigger_error('Invalid value(s), type mismatch (Potential SQL injection). queryTemplateID "' . $queryTemplateID . '" - query: "' . $queryTemplate['query'] . '" at value ' . $invalidValueKey);
+					trigger_error('Invalid value(s), type mismatch (Potential SQL injection). queryTemplateID "' . $queryTemplateID . '" - query: "' . $queryTemplate['query'] . '" at value ' . $invalidValueKey, E_USER_ERROR);
 				}
 			}
 			else
 			{
 				$result = false;
-				trigger_error('Number of values (' . XXX_Array::getFirstLevelItemTotal($values) . ') doesn\'t match the number of input filters  (' . XXX_Array::getFirstLevelItemTotal($queryTemplate['inputFilters']) . '). queryTemplateID "' . $queryTemplateID . '" - query: "' . $queryTemplate['query'] . '"');
+				trigger_error('Number of values (' . XXX_Array::getFirstLevelItemTotal($values) . ') doesn\'t match the number of input filters  (' . XXX_Array::getFirstLevelItemTotal($queryTemplate['inputFilters']) . '). queryTemplateID "' . $queryTemplateID . '" - query: "' . $queryTemplate['query'] . '"', E_USER_ERROR);
 			}
 		}
 		else
 		{
 			$result = false;
-			trigger_error('Invalid queryTemplateID "' . $queryTemplateID . '"');
+			trigger_error('Invalid queryTemplateID "' . $queryTemplateID . '"', E_USER_ERROR);
 		}
 		
 		return $result;
 	}
 	
 	// Needed because mysql_fetch etc. return only strings, not the original type...
-	public static function processResult ($result, $recordCasting)
+	public static function processResult ($result, $responseColumnTypeCasting)
 	{
-		if ($result !== false && $result['total'] > 0 && XXX_Type::isFilledArray($recordCasting))
+		if ($result !== false && $result['total'] > 0 && XXX_Type::isFilledArray($responseColumnTypeCasting))
 		{
 			if (XXX_Type::isArray($result['record']))
 			{
-				foreach ($recordCasting as $key => $type)
+				foreach ($responseColumnTypeCasting as $key => $type)
 				{
 					switch ($type)
 					{
@@ -703,7 +713,7 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 			{
 				for ($i = 0, $iEnd = XXX_Array::getFirstLevelItemTotal($result['records']); $i < $iEnd; ++$i)
 				{
-					foreach ($recordCasting as $key => $type)
+					foreach ($responseColumnTypeCasting as $key => $type)
 					{
 						switch ($type)
 						{

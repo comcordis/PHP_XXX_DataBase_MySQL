@@ -123,7 +123,7 @@ class XXX_DataBase_MySQL_Extension_MySQLi
 		if ($this->connection->connect_errno)
 		{
 			$result = false;
-			trigger_error('Unable to connect to address: "' . $address . '"<br>MySQL error: "' . $this->getLastMySQLError() . '"');
+			trigger_error('Unable to connect to address: "' . $address . '"' . XXX_OperatingSystem::$lineSeparator . 'MySQL error: "' . $this->getLastMySQLError() . '"', E_USER_ERROR);
 		}
 				
 		return $result;
@@ -172,7 +172,7 @@ class XXX_DataBase_MySQL_Extension_MySQLi
 			}
 			else
 			{
-				trigger_error('Unable to set character set to: "' . $characterSet . '" and collation to "' . $collation . '"<br>MySQL error: "' . $this->getLastMySQLError() . '"');
+				trigger_error('Unable to set character set to: "' . $characterSet . '" and collation to "' . $collation . '"' . XXX_OperatingSystem::$lineSeparator . 'MySQL error: "' . $this->getLastMySQLError() . '"', E_USER_ERROR);
 			}
 		}
 		
@@ -289,13 +289,13 @@ class XXX_DataBase_MySQL_Extension_MySQLi
 				else
 				{
 					$result = false;
-					trigger_error('Unable to execute query:<br>' . $query . '<br>MySQL error: "' . $this->getLastMySQLError() . '"');
+					trigger_error('Unable to execute query:' . XXX_OperatingSystem::$lineSeparator . '' . $query . '' . XXX_OperatingSystem::$lineSeparator . 'MySQL error: "' . $this->getLastMySQLError() . '"', E_USER_ERROR);
 				}
 			}
 			else
 			{
 				$result = false;
-				trigger_error('Required connectionType "' . $requiredConnectionType . '" doesn\'t work with the current connectionType "' . $this->settings['connectionType'] . '"<br>For query:<br>' . $query . '');
+				trigger_error('Required connectionType "' . $requiredConnectionType . '" doesn\'t work with the current connectionType "' . $this->settings['connectionType'] . '"' . XXX_OperatingSystem::$lineSeparator . 'For query:' . XXX_OperatingSystem::$lineSeparator . '' . $query . '', E_USER_ERROR);
 			}
 		}
 		

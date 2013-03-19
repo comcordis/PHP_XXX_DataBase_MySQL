@@ -186,12 +186,12 @@ class XXX_DataBase_MySQL_RecordCRUD
 				
 				$responseType = 'record';
 				
-				$recordCasting = array();
+				$responseColumnTypeCasting = array();
 				foreach ($queryTemplateInformation['columns'] as $columnName => $columnMainDataType)
 				{
 					if ($columnMainDataType != 'string')
 					{
-						$recordCasting[$columnName] = $columnMainDataType;
+						$responseColumnTypeCasting[$columnName] = $columnMainDataType;
 					}
 				}
 				
@@ -200,7 +200,7 @@ class XXX_DataBase_MySQL_RecordCRUD
 					'query' => $query,
 					'inputFilters' => $inputFilters,
 					'responseType' => $responseType,
-					'recordCasting' => $recordCasting
+					'responseColumnTypeCasting' => $responseColumnTypeCasting
 				);
 			
 			// deleteRecord
@@ -208,7 +208,7 @@ class XXX_DataBase_MySQL_RecordCRUD
 				$query = '';
 				$query .= 'DELETE';
 				$query .= ' ';
-				$query .= 'FROM';			
+				$query .= 'FROM';
 				$query .= $dataBaseAndTableQueryPart;
 				$query .= 'WHERE';
 				$query .= ' ';
@@ -231,10 +231,10 @@ class XXX_DataBase_MySQL_RecordCRUD
 					'responseType' => $responseType
 				);
 						
-			XXX_DataBase_MySQL_QueryTemplate::create($this->recordRepresentationTemplateName . '>createRecord', $queryTemplates['createRecord']['query'], $queryTemplates['createRecord']['inputFilters'], $queryTemplates['createRecord']['responseType'], 'content', '', $queryTemplates['createRecord']['recordCasting']);				
-			XXX_DataBase_MySQL_QueryTemplate::create($this->recordRepresentationTemplateName . '>retrieveRecord', $queryTemplates['retrieveRecord']['query'], $queryTemplates['retrieveRecord']['inputFilters'], $queryTemplates['retrieveRecord']['responseType'], 'content', '', $queryTemplates['retrieveRecord']['recordCasting']);				
-			XXX_DataBase_MySQL_QueryTemplate::create($this->recordRepresentationTemplateName . '>updateRecord', $queryTemplates['updateRecord']['query'], $queryTemplates['updateRecord']['inputFilters'], $queryTemplates['updateRecord']['responseType'], 'content', '', $queryTemplates['updateRecord']['recordCasting']);				
-			XXX_DataBase_MySQL_QueryTemplate::create($this->recordRepresentationTemplateName . '>deleteRecord', $queryTemplates['deleteRecord']['query'], $queryTemplates['deleteRecord']['inputFilters'], $queryTemplates['deleteRecord']['responseType'], 'content', '', $queryTemplates['deleteRecord']['recordCasting']);				
+			XXX_DataBase_MySQL_QueryTemplate::create($this->recordRepresentationTemplateName . '>createRecord', $queryTemplates['createRecord']['query'], $queryTemplates['createRecord']['inputFilters'], $queryTemplates['createRecord']['responseType'], 'content', '', $queryTemplates['createRecord']['responseColumnTypeCasting']);				
+			XXX_DataBase_MySQL_QueryTemplate::create($this->recordRepresentationTemplateName . '>retrieveRecord', $queryTemplates['retrieveRecord']['query'], $queryTemplates['retrieveRecord']['inputFilters'], $queryTemplates['retrieveRecord']['responseType'], 'content', '', $queryTemplates['retrieveRecord']['responseColumnTypeCasting']);				
+			XXX_DataBase_MySQL_QueryTemplate::create($this->recordRepresentationTemplateName . '>updateRecord', $queryTemplates['updateRecord']['query'], $queryTemplates['updateRecord']['inputFilters'], $queryTemplates['updateRecord']['responseType'], 'content', '', $queryTemplates['updateRecord']['responseColumnTypeCasting']);				
+			XXX_DataBase_MySQL_QueryTemplate::create($this->recordRepresentationTemplateName . '>deleteRecord', $queryTemplates['deleteRecord']['query'], $queryTemplates['deleteRecord']['inputFilters'], $queryTemplates['deleteRecord']['responseType'], 'content', '', $queryTemplates['deleteRecord']['responseColumnTypeCasting']);				
 		}
 	}
 	
