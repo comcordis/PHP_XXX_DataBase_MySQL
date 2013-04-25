@@ -8,7 +8,7 @@ abstract class XXX_DataBase_MySQL_Filter
 	
 	public static function filterString ($string)
 	{
-		return str_replace(array('\\', "\0", "\n", "\r", "'", '"', "\x1a"), array('\\\\', '\\0', '\\n', '\\r', "\\'", '\\"', '\\Z'), $string); 
+		return XXX_String::replace($string, array('\\', "\0", "\n", "\r", "'", '"', "\x1a"), array('\\\\', '\\0', '\\n', '\\r', "\\'", '\\"', '\\Z')); 
 				
 		//return XXX_String::addSlashes($string);
 	}
@@ -25,7 +25,10 @@ abstract class XXX_DataBase_MySQL_Filter
 	
 	public static function filterLike ($string)
 	{
-		return XXX_String::replace($string, array('%', '_'), array('\\%', '\\_'));
+		$string = self::filterString($string);
+		$string = XXX_String::replace($string, array('%', '_'), array('\\%', '\\_'));
+		
+		return $string;
 	}
 	
 	public static function filterPattern ($string)
