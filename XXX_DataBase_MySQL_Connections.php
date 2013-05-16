@@ -35,7 +35,7 @@ abstract class XXX_DataBase_MySQL_Connections
 			$deployEnvironment = XXX::$deploymentInformation['deployEnvironment'];
 		}
 		
-		if (!XXX_Array::hasValue(array('development', 'acceptance', 'production'), $deployEnvironment))
+		if (!XXX_Array::hasValue(array('development', 'integration', 'acceptance', 'staging', 'production'), $deployEnvironment))
 		{
 			$deployEnvironment = 'development';
 		}
