@@ -193,25 +193,25 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 						else
 						{
 							$result = false;
-							trigger_error('Invalid input filter(s) specified: "' . XXX_Array::joinValuesToString($filters, '|') . '"', E_USER_ERROR);
+							trigger_error('Query template: "' . $name . '" - Invalid input filter(s) specified: "' . XXX_Array::joinValuesToString($filters, '|') . '"', E_USER_ERROR);
 						}
 					}
 					else
 					{
 						$result = false;
-						trigger_error('Number of variable values doesn\'t match the number of input filters', E_USER_ERROR);
+						trigger_error('Query template: "' . $name . '" - Number of variable values doesn\'t match the number of input filters', E_USER_ERROR);
 					}
 				}
 				else
 				{
 					$result = false;
-					trigger_error('Invalid responseType: "' . $responseType . '"', E_USER_ERROR);
+					trigger_error('Query template: "' . $name . '" - Invalid responseType: "' . $responseType . '"', E_USER_ERROR);
 				}
 			}
 			else
 			{
 				$result = false;
-				trigger_error('Invalid requiredConnectionType "' . $requiredConnectionType . '"', E_USER_ERROR);
+				trigger_error('Query template: "' . $name . '" - Invalid requiredConnectionType "' . $requiredConnectionType . '"', E_USER_ERROR);
 			}
 		}
 		

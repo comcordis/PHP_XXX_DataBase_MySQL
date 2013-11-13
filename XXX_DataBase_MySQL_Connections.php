@@ -21,7 +21,7 @@ abstract class XXX_DataBase_MySQL_Connections
 		self::$defaultPrefix = $defaultPrefix;
 	}
 	
-	public static function add ($prefix = '', $name = '', $settings = array(), $deployEnvironment = '', $recycleName = false)
+	public static function add ($prefix = '', $name = '', $settings = array(), $deployEnvironment = false, $recycleName = false)
 	{
 		global $XXX_DataBase_MySQL_QueryTemplates;
 	
@@ -30,15 +30,7 @@ abstract class XXX_DataBase_MySQL_Connections
 			$prefix = self::$defaultPrefix;
 		}
 		
-		if ($deployEnvironment == '')
-		{
-			$deployEnvironment = XXX::$deploymentInformation['deployEnvironment'];
-		}
-		
-		if (!XXX_Array::hasValue(array('development', 'integration', 'acceptance', 'staging', 'production'), $deployEnvironment))
-		{
-			$deployEnvironment = 'development';
-		}
+		$deployEnvironment = XXX::normalizeDeployEnvironment($deployEnvironment);
 		
 		if ($settings['characterSet'] == '')
 		{
@@ -67,7 +59,7 @@ abstract class XXX_DataBase_MySQL_Connections
 		
 		if ($settings['address'] == '')
 		{
-			$settings['address'] = 'localhost';
+			$settings['address'] = '127.0.0.1';
 		}
 		
 		$dataBase = $prefix . '_';
@@ -104,6 +96,21 @@ abstract class XXX_DataBase_MySQL_Connections
 			self::$abstractionLayers[$name]->open(self::$connections[$name]);
 		}
 			
+	}
+	
+	public static function initialize ()
+	{
+		$settings = array
+		(
+			'user' => 'root',
+			'pass' => '',
+			'connectionType' => 'administration'
+		);
+		
+		self::add('XXX', 'development', $settings);
+		self::add('XXX', 'local', $settings, false, 'development');
+		
+		self::setDefaultPrefix(XXX::$deploymentInformation['project']);
 	}
 }
 

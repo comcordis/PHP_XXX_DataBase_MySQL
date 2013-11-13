@@ -16,4 +16,6 @@ require_once 'XXX_DataBase_MySQL_Connections.php';
 
 require_once 'mySQL.queryTemplates.php';
 
+XXX_DataBase_MySQL_Connections::initialize();
+
 ?>
