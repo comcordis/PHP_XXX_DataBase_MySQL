@@ -5,6 +5,8 @@ class XXX_DataBase_MySQL_AbstractionLayer
 {
 	const CLASS_NAME = 'XXX_DataBase_MySQL_AbstractionLayer';
 	
+	protected $debugQueries = false;
+	
 	protected $connection = false;
 	
 	protected $queryTemplates = array();
@@ -175,7 +177,7 @@ class XXX_DataBase_MySQL_AbstractionLayer
 								$result = XXX_DataBase_MySQL_QueryTemplate::processResult($result, $processedQueryTemplateInput['responseColumnTypeCasting']);
 							}
 							
-							if (XXX_PHP::$debug)
+							if (XXX_PHP::$debug && $this->debugQueries)
 							{
 								$debugNotification = '';
 								$debugNotification .= 'template: ' . $name . XXX_OperatingSystem::$lineSeparator;
