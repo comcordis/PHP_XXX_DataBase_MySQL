@@ -58,9 +58,8 @@ class XXX_DataBase_MySQL_Extension_MySQL
 			$this->hasTriedToConnect = true;
 			
 			$connected = false;
-			global $timeMeasurement;
 			
-			$timeMeasurement[] = array('Before connecting to database', microtime(true));
+			XXX_PHP::profileExecution('Before connecting to database');
 			
 			if (XXX_Type::isValue($this->settings['address']) && XXX_Type::isValue($this->settings['user']))
 			{
@@ -106,7 +105,7 @@ class XXX_DataBase_MySQL_Extension_MySQL
 				$this->disconnect();
 			}
 			
-			$timeMeasurement[] = array('After connecting to database', microtime(true));
+			XXX_PHP::profileExecution('After connecting to database');
 		}
 		
 		return $result;
