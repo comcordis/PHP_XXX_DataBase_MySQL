@@ -562,13 +562,15 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 			
 			*/
 			
-			public function exportTableStructureToLocalFile ($dataBase, $table, $absoluteLocalFile)
+			public function exportTableStructureToLocalFile ($dataBase, $table, $outputFile)
 			{
+				XXX_FileSystem_Local::ensurePathExistenceByDestination($outputFile);
+				
 				$result = $this->getCreateTableQuery($dataBase, $table);
 				
 				if ($result !== false)
 				{
-					$result = XXX_FileSystem_Local::writeFileContent($absoluteLocalFile, $result);
+					$result = XXX_FileSystem_Local::writeFileContent($outputFile, $result);
 				}
 				
 				return $result;
@@ -580,25 +582,33 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 			
 			*/
 			
-			public function dumpTableStructureToLocalFile ($dataBase, $table, $absoluteLocalFile)
+			public function dumpTableStructureToLocalFile ($dataBase, $table, $outputFile)
 			{
 				$result = false;
+				
+				XXX_FileSystem_Local::ensurePathExistenceByDestination($outputFile);
 				
 				$connectionSettings = $this->connection->getSettings();
 				
 				$user = $connectionSettings['user'];
 				$pass = $connectionSettings['pass'];
+				$address = $connectionSettings['address'];
 				
 				$mysqlDumpCommand = '';
-				$mysqlDumpCommand .= 'mysqldump -d -h localhost --user=' . $user . ' --password=' . $pass;
+				$mysqlDumpCommand .= 'mysqldump';
+				if (XXX_OperatingSystem::$platformName == 'windows')
+				{
+					$mysqlDumpCommand .= '.exe';
+				}
+				$mysqlDumpCommand .= ' -d -h ' . $address . ' --user=' . $user . ' --password=' . $pass;
 				$mysqlDumpCommand .= ' ' . $dataBase;
 				$mysqlDumpCommand .= ' ' . $table;
-				$mysqlDumpCommand .= ' > ' . $absoluteLocalFile;
+				$mysqlDumpCommand .= ' > ' . $outputFile;
 				
-				/*$commandResponse = CLH_CommandLine::executeCommand($mysqlDumpCommand);
-								
-				CLH_CommandLine::clearHistory();
-				*/
+				$commandResponse = XXX_CommandLineHelpers::executeCommand($mysqlDumpCommand);
+				
+				XXX_CommandLineHelpers::clearHistory();
+					
 				if ($commandResponse)
 				{
 					if ($commandResponse['statusCode'] == 0)
@@ -610,27 +620,27 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 				return $result;
 			}
 			
-			public function backUpTableStructure ($dataBase, $table, $method = 'dump', $outputFilePath = '')
+			public function backUpTableStructure ($dataBase, $table, $method = 'dump', $outputFile = '')
 			{
 				$method = XXX_Default::toOption($method, array('dump', 'export'), 'dump');
 				
 				$result = false;
 				
-				if ($outputFilePath == '')
+				if ($outputFile == '')
 				{
 					$outputFile = 'mySQL.' . $method . '.structure.' . $dataBase . '.' . $table;			
 					$outputFile .= '.' . XXX_TimestampHelpers::getTimestampPartForFile() . '.sql';
-							
-					//$outputFilePath = XXX_Paths::composeExtendedPath('AbsoluteLocal', 'data_backUps', $outputFile);
+					
+					$outputFile = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', 'dataBase', 'mySQL', $outputFile));
 				}
 				
 				switch ($method)
 				{
 					case 'dump':
-						$result = $this->dumpTableStructureToLocalFile($dataBase, $table, $outputFilePath);
+						$result = $this->dumpTableStructureToLocalFile($dataBase, $table, $outputFile);
 						break;
 					case 'export':
-						$result = $this->exportTableStructureToLocalFile($dataBase, $table, $outputFilePath);
+						$result = $this->exportTableStructureToLocalFile($dataBase, $table, $outputFile);
 						break;
 				}
 				
@@ -667,9 +677,11 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 		
 		// Export
 		
-			public function exportTableDataToLocalFile ($dataBase, $table, $absoluteLocalFile)
+			public function exportTableDataToLocalFile ($dataBase, $table, $outputFile)
 			{
-				$result = $this->executeQueryTemplate('Administration>exportTableDataToLocalFile', array($absoluteLocalFile, $dataBase, $table));
+				XXX_FileSystem_Local::ensurePathExistenceByDestination($outputFile);
+				
+				$result = $this->executeQueryTemplate('Administration>exportTableDataToLocalFile', array($outputFile, $dataBase, $table));
 				
 				$result = ($result !== false);
 				
@@ -683,20 +695,28 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 			
 			*/
 			
-			public function dumpTableDataToLocalFile ($dataBase, $table, $absoluteLocalFile)
+			public function dumpTableDataToLocalFile ($dataBase, $table, $outputFile)
 			{
 				$result = false;
+				
+				XXX_FileSystem_Local::ensurePathExistenceByDestination($outputFile);
 				
 				$connectionSettings = $this->connection->getSettings();
 				
 				$user = $connectionSettings['user'];
 				$pass = $connectionSettings['pass'];
+				$address = $connectionSettings['address'];
 				
 				$mysqlDumpCommand = '';
-				$mysqlDumpCommand .= 'mysqldump -t -n -h localhost --user=' . $user . ' --password=' . $pass;
+				$mysqlDumpCommand .= 'mysqldump';
+				if (XXX_OperatingSystem::$platformName == 'windows')
+				{
+					$mysqlDumpCommand .= '.exe';
+				}
+				$mysqlDumpCommand .= ' -t -n -h ' . $address . ' --user=' . $user . ' --password=' . $pass;
 				$mysqlDumpCommand .= ' ' . $dataBase;
 				$mysqlDumpCommand .= ' ' . $table;
-				$mysqlDumpCommand .= ' > ' . $absoluteLocalFile;
+				$mysqlDumpCommand .= ' > ' . $outputFile;
 				
 				$commandResponse = XXX_CommandLineHelpers::executeCommand($mysqlDumpCommand);
 				
@@ -713,28 +733,27 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 				return $result;
 			}
 			
-			public function backUpTableData ($dataBase, $table, $method = 'export', $outputFilePath = '')
+			public function backUpTableData ($dataBase, $table, $method = 'dump', $outputFile = '')
 			{
 				$method = XXX_Default::toOption($method, array('dump', 'export'), 'dump');
 				
 				$result = false;
 				
-				if ($outputFilePath == '')
+				if ($outputFile == '')
 				{
 					$outputFile = 'mySQL.' . $method . '.data.' . $dataBase . '.' . $table;			
-					$outputFile .= '.' . XXX_TimestampHelpers::getTimestampPartForFile();
-					$outputFile .= $method == 'dump' ? '.sql' : '.csv';
+					$outputFile .= '.' . XXX_TimestampHelpers::getTimestampPartForFile() . '.sql';
 					
-					//$outputFilePath = XXX_Paths::composeExtendedPath('AbsoluteLocal', 'data_backUps', $outputFile);
+					$outputFile = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', 'dataBase', 'mySQL', $outputFile));
 				}
 				
 				switch ($method)
 				{
 					case 'dump':
-						$result = $this->dumpTableDataToLocalFile($dataBase, $table, $outputFilePath);
+						$result = $this->dumpTableDataToLocalFile($dataBase, $table, $outputFile);
 						break;
 					case'export':
-						$result = $this->exportTableDataToLocalFile($dataBase, $table, $outputFilePath);
+						$result = $this->exportTableDataToLocalFile($dataBase, $table, $outputFile);
 						break;
 				}
 				
@@ -743,9 +762,9 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 		
 		// Import
 		
-			public function importTableDataFromLocalFile ($dataBase, $table, $absoluteLocalFile)
+			public function importTableDataFromLocalFile ($dataBase, $table, $inputFile)
 			{
-				$result = $this->executeQueryTemplate('Administration>importTableDataFromLocalFile', array($absoluteLocalFile, $dataBase, $table));
+				$result = $this->executeQueryTemplate('Administration>importTableDataFromLocalFile', array($inputFile, $dataBase, $table));
 				
 				$result = ($result !== false);
 				
@@ -754,7 +773,7 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 		
 	// Execute SQL file
 		
-		public function executeLocalSQLFile ($absoluteLocalFile)
+		public function executeLocalSQLFile ($inputFile)
 		{
 			$result = false;
 				
@@ -764,8 +783,13 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 			$pass = $connectionSettings['pass'];
 			
 			$mysqlCommand = '';
-			$mysqlCommand .= 'mysql -h localhost --user=' . $user . ' --password=' . $pass;
-			$mysqlCommand .= ' < ' . $absoluteLocalFile;
+			$mysqlCommand .= 'mysql';
+			if (XXX_OperatingSystem::$platformName == 'windows')
+			{
+				$mysqlDumpCommand .= '.exe';
+			}
+			$mysqlDumpCommand .= ' -h localhost --user=' . $user . ' --password=' . $pass;
+			$mysqlCommand .= ' < ' . $inputFile;
 			
 			$commandResponse = XXX_CommandLineHelpers::executeCommand($mysqlCommand);
 			
