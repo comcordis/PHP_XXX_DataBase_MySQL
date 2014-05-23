@@ -15,8 +15,8 @@ require_once 'XXX_DataBase_MySQL_QueryTemplate.php';
 require_once 'XXX_DataBase_MySQL_Connections.php';
 
 require_once 'XXX_DataBase_MySQL_Model.php';
-require_once 'XXX_DataBase_MySQL_DataBase_Model.php';
-require_once 'XXX_DataBase_MySQL_DataBase_Table_Model.php';
+require_once 'XXX_DataBase_MySQL_Model_DataBase.php';
+require_once 'XXX_DataBase_MySQL_Model_DataBase_Table.php';
 
 require_once 'mySQL.queryTemplates.php';
 

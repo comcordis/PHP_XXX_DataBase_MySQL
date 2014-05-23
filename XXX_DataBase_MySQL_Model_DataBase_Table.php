@@ -1,6 +1,6 @@
 <?php
 
-class XXX_DataBase_MySQL_DataBase_Table_Model
+class XXX_DataBase_MySQL_Model_DataBase_Table
 {
 	public $project = false;
 	public $abstractionLayer = false;
