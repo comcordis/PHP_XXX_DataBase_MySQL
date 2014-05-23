@@ -631,7 +631,9 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 					$outputFile = 'mySQL.' . $method . '.structure.' . $dataBase . '.' . $table;			
 					$outputFile .= '.' . XXX_TimestampHelpers::getTimestampPartForFile() . '.sql';
 					
-					$outputFile = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', 'dataBase', 'mySQL', $outputFile));
+					$timestampPartsForPath = XXX_TimestampHelpers::getTimestampPartsForPath();
+					
+					$outputFile = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', $outputFile));
 				}
 				
 				switch ($method)
@@ -744,7 +746,9 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 					$outputFile = 'mySQL.' . $method . '.data.' . $dataBase . '.' . $table;			
 					$outputFile .= '.' . XXX_TimestampHelpers::getTimestampPartForFile() . '.sql';
 					
-					$outputFile = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', 'dataBase', 'mySQL', $outputFile));
+					$timestampPartsForPath = XXX_TimestampHelpers::getTimestampPartsForPath();
+					
+					$outputFile = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', $outputFile));
 				}
 				
 				switch ($method)
