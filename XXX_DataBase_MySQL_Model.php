@@ -1,32 +1,24 @@
 <?php
 
-abstract class XXX_DataBase_MySQL_Model
+class XXX_DataBase_MySQL_Model
 {
-	public static $connection = false;
+	public $project = false;
 	
-	public static function processArgumentConnection  ($connection)
+	public function __construct ($project = '')
 	{
-		if ($connection)
+		if ($project != '')
 		{
-			self::$connection = $connection;
+			$this->project = $project;
 		}
 		
-		return self::$connection !== false;
+		if ($this->project == '')
+		{
+			if (XXX::$deploymentInformation['project'] != '')
+			{
+				$this->project = XXX::$deploymentInformation['project'];
+			}
+		}
 	}
-	
-	public static function setConnection  ($connection)
-	{
-		self::$connection = $connection;
-		
-		return self::$connection !== false;
-	}
-	
-	public static function resetConnection ()
-	{
-		self::$connection = false;
-		
-		return false;
-	}	
 }
 
 ?>
