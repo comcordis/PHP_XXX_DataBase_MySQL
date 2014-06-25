@@ -5,7 +5,7 @@ class XXX_DataBase_MySQL_AbstractionLayer
 {
 	const CLASS_NAME = 'XXX_DataBase_MySQL_AbstractionLayer';
 	
-	protected $debugQueries = false;
+	protected $debugQueries = true;
 	
 	protected $connection = false;
 	

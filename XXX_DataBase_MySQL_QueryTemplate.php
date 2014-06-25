@@ -14,6 +14,7 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 		'string',
 		'stringOptions',
 		'stringBetween',
+		'json',
 		'boolean',
 		'like',
 		'pattern',
@@ -470,6 +471,22 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 								break;
 							}
 							break;
+						case 'json':
+							$value = XXX_String_JSON::encode($value);
+							
+							$value = XXX_Type::makeString($value);
+														
+							if (!XXX_Type::isString($value))
+							{
+								$validValues = false;									
+								$invalidValueKey = $i;
+								break;
+							}
+							else
+							{
+								$value = '"' . XXX_DataBase_MySQL_Filter::filterString($value) . '"';
+							}
+							break;
 						case 'order':
 							$value = XXX_String::convertToLowerCase($value);
 							
@@ -706,6 +723,9 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 						case 'boolean':
 							$result['record'][$key] = XXX_Type::makeBoolean($result['record'][$key]);
 							break;
+						case 'json':
+							$result['record'][$key] = XXX_String_JSON::decode($result['record'][$key]);
+							break;
 					}
 				}
 			}
@@ -725,6 +745,9 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 								break;
 							case 'boolean':
 								$result['records'][$i][$key] = XXX_Type::makeBoolean($result['records'][$i][$key]);
+								break;
+							case 'json':
+								$result['records'][$i][$key] = XXX_String_JSON::decode($result['records'][$i][$key]);
 								break;
 						}
 					}
