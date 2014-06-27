@@ -628,12 +628,12 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 				
 				if ($outputFile == '')
 				{
-					$outputFile = 'mySQL.' . $method . '.structure.' . $dataBase . '.' . $table;			
-					$outputFile .= '.' . XXX_TimestampHelpers::getTimestampPartForFile() . '.sql';
+					// Short file name due to path length limitations
+					$outputFile = $method . '.sql';
 					
 					$timestampPartsForPath = XXX_TimestampHelpers::getTimestampPartsForPath();
 					
-					$outputFile = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', $outputFile));
+					$outputFile = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', 'structure', $dataBase, $table, $outputFile));
 				}
 				
 				switch ($method)
@@ -644,6 +644,13 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 					case 'export':
 						$result = $this->exportTableStructureToLocalFile($dataBase, $table, $outputFile);
 						break;
+				}
+				
+				if (!XXX_FileSystem_Local::doesFileExist($outputFile))
+				{
+					trigger_error($outputFile . ' failed');
+					
+					$result = false;
 				}
 				
 				return $result;
@@ -743,12 +750,12 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 				
 				if ($outputFile == '')
 				{
-					$outputFile = 'mySQL.' . $method . '.data.' . $dataBase . '.' . $table;			
-					$outputFile .= '.' . XXX_TimestampHelpers::getTimestampPartForFile() . '.sql';
+					// Short file name due to path length limitations
+					$outputFile = $method . '.sql';
 					
 					$timestampPartsForPath = XXX_TimestampHelpers::getTimestampPartsForPath();
 					
-					$outputFile = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', $outputFile));
+					$outputFile = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', 'data', $dataBase, $table, $outputFile));
 				}
 				
 				switch ($method)
@@ -759,6 +766,13 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 					case'export':
 						$result = $this->exportTableDataToLocalFile($dataBase, $table, $outputFile);
 						break;
+				}
+				
+				if (!XXX_FileSystem_Local::doesFileExist($outputFile))
+				{
+					trigger_error($outputFile . ' failed');
+					
+					$result = false;
 				}
 				
 				return $result;
@@ -774,27 +788,88 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 				
 				return $result;
 			}
+			
+	// Restore
+		
+		public function restore ($year = 0, $month = 0, $date = 0, $overwriteDeployEnvironment = false)
+		{
+			if ($overwriteDeployEnvironment)
+			{
+				$overwriteDeployEnvironment = XXX_Default::toOption($overwriteDeployEnvironment, array('development', 'integration', 'acceptance', 'staging', 'production'));
+			}
+					
+			$result = false;
+			
+			$backUpPath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $year, $month, $date, 'dataBase', 'mySQL'));
+			
+			// Structure
+			
+				$structurePath = XXX_Path_Local::extendPath($backUpPath, 'structure');
+				
+				$structureDirectoryContent = XXX_FileSystem_Local::getDirectoryContent($structurePath);
+				
+				foreach ($structureDirectoryContent['directories'] as $dataBaseDirectory)
+				{
+					$dataBase = $dataBaseDirectory['directory'];
+					
+					if ($overwriteDeployEnvironment)
+					{
+						$dataBase = XXX_String::replace($dataBase, XXX::$deploymentInformation['deployEnvironment'], $overwriteDeployEnvironment);
+					}
+					
+					if (!$this->doesDataBaseExist($dataBase))
+					{
+						$this->createDataBase($dataBase);
+					}
+					
+					$this->selectDataBase($dataBase);
+					
+					$this->executeLocalSQLDirectory($dataBaseDirectory['path']);
+				}
+			
+			// Data
+			
+				$dataPath = XXX_Path_Local::extendPath($backUpPath, 'data');
+				
+				$dataDirectoryContent = XXX_FileSystem_Local::getDirectoryContent($dataPath);
+				
+				foreach ($dataDirectoryContent['directories'] as $dataBaseDirectory)
+				{
+					$dataBase = $dataBaseDirectory['directory'];
+					
+					if ($overwriteDeployEnvironment)
+					{
+						$dataBase = XXX_String::replace($dataBase, XXX::$deploymentInformation['deployEnvironment'], $overwriteDeployEnvironment);
+					}
+					
+					$this->selectDataBase($dataBase);
+					
+					$this->executeLocalSQLDirectory($dataBaseDirectory['path']);
+				}
+		}
 		
 	// Execute SQL file
 		
 		public function executeLocalSQLFile ($inputFile)
 		{
 			$result = false;
-				
+			
 			$connectionSettings = $this->connection->getSettings();
 			
 			$user = $connectionSettings['user'];
 			$pass = $connectionSettings['pass'];
 			
+			$dataBase = $this->connection->getSelectedDataBase();
+			
 			$mysqlCommand = '';
 			$mysqlCommand .= 'mysql';
 			if (XXX_OperatingSystem::$platformName == 'windows')
 			{
-				$mysqlDumpCommand .= '.exe';
+				$mysqlCommand .= '.exe';
 			}
-			$mysqlDumpCommand .= ' -h localhost --user=' . $user . ' --password=' . $pass;
+			$mysqlCommand .= ' -h localhost --user=' . $user . ' --password=' . $pass . ' --database=' . $dataBase;
 			$mysqlCommand .= ' < ' . $inputFile;
-			
+						
 			$commandResponse = XXX_CommandLineHelpers::executeCommand($mysqlCommand);
 			
 			XXX_CommandLineHelpers::clearHistory();
@@ -808,6 +883,29 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 			}
 						
 			return $result;
+		}
+		
+		public function executeLocalSQLDirectory ($directory = '', $recursive = true)
+		{
+			$directories = array();
+			
+			$tempDirectoryContent = XXX_FileSystem_Local::getDirectoryContent($directory);
+			
+			foreach ($tempDirectoryContent['files'] as $tempFile)
+			{
+				if (XXX_FileSystem_Local::getFileExtension($tempFile['file']) == 'sql')
+				{
+					$this->executeLocalSQLFile($tempFile['path']);
+				}
+			}
+			
+			if ($recursive)
+			{
+				foreach ($tempDirectoryContent['directories'] as $tempDirectory)
+				{
+					$this->executeLocalSQLDirectory($tempDirectory['path'], true);
+				}
+			}
 		}
 }
 
