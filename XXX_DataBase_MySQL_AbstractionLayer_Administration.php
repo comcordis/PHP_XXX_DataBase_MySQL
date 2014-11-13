@@ -907,6 +907,30 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 				}
 			}
 		}
+		
+	// Archives
+		
+		public static function createBackUpArchives ()
+		{
+			$extension = '.tar.gz';
+			
+			if (XXX_OperatingSystem::$platformName == 'windows')
+			{
+				$extension = '.zip';
+			}
+			
+			$timestampPartsForPath = XXX_TimestampHelpers::getTimestampPartsForPath();
+			
+				$dataSourcePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', 'data'));
+				$dataOutputFilePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', 'data' . $extension));
+				
+			XXX_FileSystem_Local_Archive::createTarGzipArchive($dataOutputFilePath, $dataSourcePath);
+			
+				$structureSourcePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', 'structure'));
+				$structureOutputFilePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', 'structure' . $extension));
+				
+			XXX_FileSystem_Local_Archive::createTarGzipArchive($structureOutputFilePath, $structureSourcePath);
+		}
 }
 
 ?>
