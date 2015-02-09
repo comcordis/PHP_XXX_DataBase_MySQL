@@ -885,7 +885,9 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 			return $result;
 		}
 		
-		public function executeLocalSQLDirectory ($directory = '', $recursive = true)
+		// Filter: structure | data
+
+		public function executeLocalSQLDirectory ($directory = '', $recursive = true, $filter = '')
 		{
 			$directories = array();
 			
@@ -895,7 +897,17 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 			{
 				if (XXX_FileSystem_Local::getFileExtension($tempFile['file']) == 'sql')
 				{
-					$this->executeLocalSQLFile($tempFile['path']);
+					if ($filter != '')
+					{
+						if (XXX_String::hasPart($tempFile['path'], $filter))
+						{
+							$this->executeLocalSQLFile($tempFile['path']);
+						}
+					}
+					else
+					{
+						$this->executeLocalSQLFile($tempFile['path']);
+					}
 				}
 			}
 			
@@ -910,26 +922,34 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 		
 	// Archives
 		
-		public static function createBackUpArchives ()
+		public static function archiveBackUp ($year = 0, $month = 0, $date = 0)
 		{
-			$extension = '.tar.gz';
-			
-			if (XXX_OperatingSystem::$platformName == 'windows')
-			{
-				$extension = '.zip';
-			}
+			$extension = XXX_FileSystem_Local_Archive::determineExtension();
 			
 			$timestampPartsForPath = XXX_TimestampHelpers::getTimestampPartsForPath();
+
+			if ($year == 0)
+			{
+				$year = $timestampPartsForPath['year'];
+			}
+			if ($month == 0)
+			{
+				$month = $timestampPartsForPath['month'];
+			}
+			if ($date == 0)
+			{
+				$date = $timestampPartsForPath['date'];
+			}
 			
-				$dataSourcePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', 'data'));
-				$dataOutputFilePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', 'data' . $extension));
+				$dataSourcePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $year, $month, $date, 'dataBase', 'mySQL', 'data'));
+				$dataOutputFilePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $year, $month, $date, 'dataBase', 'mySQL', 'data' . $extension));
 				
-			XXX_FileSystem_Local_Archive::createTarGzipArchive($dataOutputFilePath, $dataSourcePath);
+			XXX_FileSystem_Local_Archive::createArchive($dataOutputFilePath, $dataSourcePath);
 			
-				$structureSourcePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', 'structure'));
-				$structureOutputFilePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $timestampPartsForPath['year'], $timestampPartsForPath['month'], $timestampPartsForPath['date'], 'dataBase', 'mySQL', 'structure' . $extension));
+				$structureSourcePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $year, $month, $date, 'dataBase', 'mySQL', 'structure'));
+				$structureOutputFilePath = XXX_Path_Local::extendPath(XXX_Path_Local::$deploymentDataPathPrefix, array('backUps', $year, $month, $date, 'dataBase', 'mySQL', 'structure' . $extension));
 				
-			XXX_FileSystem_Local_Archive::createTarGzipArchive($structureOutputFilePath, $structureSourcePath);
+			XXX_FileSystem_Local_Archive::createArchive($structureOutputFilePath, $structureSourcePath);
 		}
 }
 
