@@ -886,7 +886,7 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 		}
 		
 		// Filter: structure | data
-
+		
 		public function executeLocalSQLDirectory ($directory = '', $recursive = true, $filter = '')
 		{
 			$directories = array();
@@ -922,7 +922,7 @@ class XXX_DataBase_MySQL_AbstractionLayer_Administration extends XXX_DataBase_My
 		
 	// Archives
 		
-		public static function archiveBackUp ($year = 0, $month = 0, $date = 0)
+		public static function createBackUpArchives ($year = 0, $month = 0, $date = 0)
 		{
 			$extension = XXX_FileSystem_Local_Archive::determineExtension();
 			
