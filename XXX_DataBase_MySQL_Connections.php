@@ -21,30 +21,86 @@ abstract class XXX_DataBase_MySQL_Connections
 		self::$defaultPrefix = $defaultPrefix;
 	}
 	
-	public static function add ($prefix = '', $name = '', $settings = array(), $deployEnvironment = false, $recycleName = false)
+	public static function add ($prefix = '', $name = '', $settings = array(), $deployEnvironment = false, $inheritFromName = false)
 	{
 		global $XXX_DataBase_MySQL_QueryTemplates;
-	
-		if ($prefix == '')
+
+		$inheritedSettings = array();
+
+		if ($inheritFromName !== false && array_key_exists($inheritFromName, self::$dataBases))
 		{
-			$prefix = self::$defaultPrefix;
+			$inheritedSettings = self::$connections[$inheritFromName]->getSettings();
 		}
-		
-		$deployEnvironment = XXX::normalizeDeployEnvironment($deployEnvironment);
+
+		if ($prefix)
+		{
+			$settings['prefix'] = $prefix;
+		}
+		else if ($inheritedSettings['prefix'])
+		{
+			$settings['prefix'] = $inheritedSettings['prefix'];
+		}
+		else
+		{
+			$settings['prefix'] = self::$defaultPrefix;
+		}
+						
+		if ($deployEnvironment)
+		{
+			$settings['deployEnvironment'] = XXX::normalizeDeployEnvironment($deployEnvironment);
+		}
+		else if ($inheritedSettings['deployEnvironment'])
+		{
+			$settings['deployEnvironment'] = $inheritedSettings['deployEnvironment'];
+		}
+		else
+		{
+			$settings['deployEnvironment'] = XXX::$deploymentInformation['deployEnvironment'];
+		}
+
+		if ($settings['defaultDataBase'] == '')
+		{
+			$dataBase = $settings['prefix'] . '_';
+			$dataBase .= $settings['deployEnvironment'] . '_';
+			$dataBase .= $name;
+
+			$settings['defaultDataBase'] = $dataBase;
+		}
 		
 		if ($settings['characterSet'] == '')
 		{
-			$settings['characterSet'] = 'utf8';
+			if ($inheritedSettings['characterSet'])
+			{
+				$settings['characterSet'] = $inheritedSettings['characterSet'];
+			}
+			else
+			{
+				$settings['characterSet'] = 'utf8';
+			}
 		}
 		
 		if ($settings['collation'] == '')
 		{
-			$settings['collation'] = 'utf8_unicode_ci';
+			if ($inheritedSettings['collation'])
+			{
+				$settings['collation'] = $inheritedSettings['collation'];
+			}
+			else
+			{
+				$settings['collation'] = 'utf8_unicode_ci';
+			}
 		}
 		
 		if ($settings['connectionType'] == '')
 		{
-			$settings['connectionType'] = 'readContent';
+			if ($inheritedSettings['connectionType'])
+			{
+				$settings['connectionType'] = $inheritedSettings['connectionType'];
+			}
+			else
+			{
+				$settings['connectionType'] = 'readContent';
+			}
 		}
 		
 		if (!XXX_Array::hasValue(self::$validConnectionTypes, $settings['connectionType']))
@@ -54,39 +110,46 @@ abstract class XXX_DataBase_MySQL_Connections
 		
 		if ($settings['port'] == '')
 		{
-			$settings['port'] = 3306;
+			if ($inheritedSettings['port'])
+			{
+				$settings['port'] = $inheritedSettings['port'];
+			}
+			else
+			{
+				$settings['port'] = 3306;
+			}
 		}
 		
 		if ($settings['address'] == '')
 		{
-			$settings['address'] = '127.0.0.1';
+			if ($inheritedSettings['address'])
+			{
+				$settings['address'] = $inheritedSettings['address'];
+			}
+			else
+			{
+				$settings['address'] = '127.0.0.1';
+			}
+		}
+
+		$settings['name'] = $name;
+		
+		if (!XXX_Type::isArray($XXX_DataBase_MySQL_QueryTemplates[$settings['prefix']]))
+		{
+			$XXX_DataBase_MySQL_QueryTemplates[$settings['prefix']] = array();
+		}
+		if (!XXX_Type::isArray($XXX_DataBase_MySQL_QueryTemplates[$settings['prefix']][$name]))
+		{
+			$XXX_DataBase_MySQL_QueryTemplates[$settings['prefix']][$name] = array();
 		}
 		
-		$dataBase = $prefix . '_';
-		$dataBase .= $deployEnvironment . '_';
-		$dataBase .= $name;
+		self::$dataBases[$name] = $settings['defaultDataBase'];
 		
-		if ($settings['defaultDataBase'] == '')
+		if ($inheritFromName !== false && array_key_exists($inheritFromName, self::$dataBases))
 		{
-			$settings['defaultDataBase'] = $dataBase;
-		}
-		
-		if (!XXX_Type::isArray($XXX_DataBase_MySQL_QueryTemplates[$prefix]))
-		{
-			$XXX_DataBase_MySQL_QueryTemplates[$prefix] = array();
-		}
-		if (!XXX_Type::isArray($XXX_DataBase_MySQL_QueryTemplates[$prefix][$name]))
-		{
-			$XXX_DataBase_MySQL_QueryTemplates[$prefix][$name] = array();
-		}
-		
-		self::$dataBases[$name] = $dataBase;
-		
-		if ($recycleName !== false && array_key_exists($recycleName, self::$dataBases))
-		{
-			self::$connections[$name] =& self::$connections[$recycleName];
+			self::$connections[$name] =& self::$connections[$inheritFromName];
 			
-			self::$abstractionLayers[$name] =& self::$abstractionLayers[$recycleName];
+			self::$abstractionLayers[$name] =& self::$abstractionLayers[$inheritFromName];
 		}
 		else
 		{
@@ -94,8 +157,7 @@ abstract class XXX_DataBase_MySQL_Connections
 			
 			self::$abstractionLayers[$name] = new XXX_DataBase_MySQL_AbstractionLayer_Administration();
 			self::$abstractionLayers[$name]->open(self::$connections[$name]);
-		}
-			
+		}			
 	}
 	
 	public static function initialize ()
@@ -107,8 +169,8 @@ abstract class XXX_DataBase_MySQL_Connections
 			'connectionType' => 'administration'
 		);
 		
-		self::add('XXX', 'development', $settings);
-		self::add('XXX', 'local', $settings, false, 'development');
+		self::add('XXX', 'local', $settings);
+		self::add('XXX', 'default', $settings, false, 'local');
 		
 		self::setDefaultPrefix(XXX::$deploymentInformation['project']);
 	}

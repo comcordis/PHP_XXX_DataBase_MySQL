@@ -31,7 +31,7 @@ class XXX_DataBase_MySQL_Model_DataBase
 			$this->dataBase = $dataBase;
 		}
 		
-		return XXX_DataBase_MySQL_Connections::add(false, $this->abstractionLayer, array(), false, 'local');
+		return XXX_DataBase_MySQL_Connections::add($this->project, $this->abstractionLayer, array(), false, 'default');
 	}
 	
 	public function createDataBase ()
