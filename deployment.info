@@ -1,0 +1,6 @@
+project:XXX_DataBase_MySQL_PHP
+deployEnvironment:development
+checkout:master
+commitHash:c2d8d850ed4544a4b90e427db753995570c7ae20
+timestamp:2015-04-13T09:43:57Z
+deployer:operations
