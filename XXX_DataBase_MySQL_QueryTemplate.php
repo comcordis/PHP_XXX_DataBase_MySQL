@@ -244,7 +244,12 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 					
 					switch ($inputFilter)
 					{
-						case 'integer':							
+						case 'integer':
+							if (XXX_Type::isEmpty($value) || XXX_Type::isFalse($value))
+							{
+								$value = 0;
+							}
+
 							if (XXX_Type::isNumeric($value))
 							{
 								$value = XXX_Type::makeInteger($value);
@@ -283,6 +288,11 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 								
 								foreach ($options as $option)
 								{
+									if (XXX_Type::isEmpty($option) || XXX_Type::isFalse($option))
+									{
+										$option = 0;
+									}
+
 									if (XXX_Type::isNumeric($option))
 									{
 										$option = XXX_Type::makeInteger($option);
@@ -336,6 +346,11 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 								
 								foreach ($limits as $limit)
 								{
+									if (XXX_Type::isEmpty($limit) || XXX_Type::isFalse($limit))
+									{
+										$limit = 0;
+									}
+
 									if (XXX_Type::isNumeric($limit))
 									{
 										$limit = XXX_Type::makeInteger($limit);
@@ -376,6 +391,11 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 							}
 							break;
 						case 'float':
+							if (XXX_Type::isEmpty($value) || XXX_Type::isFalse($value))
+							{
+								$value = 0;
+							}
+
 							if (XXX_Type::isNumeric($value))
 							{
 								$value = XXX_Type::makeFloat($value);
@@ -409,6 +429,11 @@ abstract class XXX_DataBase_MySQL_QueryTemplate
 								
 								foreach ($limits as $limit)
 								{
+									if (XXX_Type::isEmpty($limit) || XXX_Type::isFalse($limit))
+									{
+										$limit = 0;
+									}
+
 									if (XXX_Type::isNumeric($limit))
 									{
 										$limit = XXX_Type::makeFloat($limit);
